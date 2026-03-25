@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>互動教學工具箱</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #0066cc;
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        header h1 {
+            margin: 0;
+            font-size: 2.5em;
+        }
+        header p {
+            margin-top: 10px;
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 40px auto;
+            padding: 0 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+        }
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            text-decoration: none;
+            color: #333;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            border-top: 5px solid #0066cc;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        .card h2 {
+            margin-top: 0;
+            color: #0066cc;
+            font-size: 1.4em;
+        }
+        .card p {
+            color: #666;
+            line-height: 1.6;
+            flex-grow: 1;
+        }
+        .tag {
+            display: inline-block;
+            background-color: #e6f0ff;
+            color: #0066cc;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: bold;
+            margin-top: 15px;
+            align-self: flex-start;
+        }
+        
+        /* 敬請期待的卡片樣式 */
+        .card.coming-soon {
+            border-top: 5px solid #999;
+            background-color: #fafafa;
+            cursor: default;
+        }
+        .card.coming-soon:hover {
+            transform: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        .card.coming-soon h2 { color: #777; }
+        .card.coming-soon .tag { background-color: #eee; color: #777; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>✏️ 互動教學工具箱</h1>
+        <p>將抽象概念具象化，讓學習更有趣</p>
+    </header>
+
+    <div class="container">
+        <a href="stone-volume.html" class="card">
+            <h2>石頭體積與水位變化</h2>
+            <p>解決學生無法將「減少的水位」連結到「石頭體積」的迷思。透過「長按把水補回來」的具體操作，輕鬆理解不規則物體的體積計算。</p>
+            <div class="tag">數學 / 體積</div>
+        </a>
+
+        <div class="card coming-soon">
+            <h2>更多動畫建置中...</h2>
+            <p>未來如果有新的教學靈感，會陸續更新在這裡喔！</p>
+            <div class="tag">敬請期待</div>
+        </div>
+    </div>
+
+</body>
+</html>
