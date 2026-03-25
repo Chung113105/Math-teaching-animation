@@ -3,13 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>石頭體積與水位變化教學動畫</title>
+    <title>3D 石頭體積與水位變化教學動畫</title>
     <style>
         :root {
-            --water-color: #4da6ff;
-            --add-water-color: #ff9900;
-            --stone-color: #777;
-            --tank-border: #444;
+            --tank-border: rgba(100, 120, 140, 0.6);
+            --tank-bg: rgba(255, 255, 255, 0.1);
             --text-color: #333;
         }
 
@@ -35,204 +33,199 @@
             max-width: 900px;
         }
 
+        /* 3D 視角場景設定 */
         .simulation-area {
-            display: flex;
-            justify-content: space-around;
-            align-items: flex-end;
-            margin-bottom: 30px;
-            height: 400px;
-        }
-
-        .tank {
-            width: 200px;
-            height: 300px;
-            border: 4px solid var(--tank-border);
-            border-bottom: 8px solid var(--tank-border);
             position: relative;
-            overflow: hidden;
-            background: rgba(255, 255, 255, 0.7);
-            border-radius: 5px 5px 0 0;
-        }
-
-        .scale {
-            position: absolute;
-            left: -35px;
-            height: 100%;
-            width: 30px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            font-size: 14px;
-            color: var(--tank-border);
-            font-weight: bold;
-        }
-        .scale div {
-            position: relative;
-            right: -25px;
-        }
-
-        .water-base {
-            width: 100%;
-            height: 50%;
-            background-color: var(--water-color);
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            opacity: 0.7;
-            transition: opacity 1s ease;
-        }
-
-        .water-layer {
-            width: 100%;
-            height: 0;
-            position: absolute;
-            bottom: 50%;
-            left: 0;
-            /* 拿掉 height 的漸變，讓 JS 實時控制；保留顏色的漸變 */
-            transition: background-color 0.5s ease;
-            opacity: 0.7;
-        }
-        
-        .outline {
-            position: absolute;
-            left: 0;
-            bottom: 50%;
-            width: 100%;
-            height: 16.67%;
-            border: 2px dashed #999;
-            box-sizing: border-box;
-            opacity: 0;
-            transition: opacity 0.5s ease;
-        }
-
-        .stone {
-            width: 100px;
-            height: 50px;
-            background-color: var(--stone-color);
-            border-radius: 50% / 10% 10% 80% 80%;
-            position: absolute;
-            bottom: 0px;
-            left: 50px;
-            z-index: 10;
-            transition: bottom 1.5s ease, opacity 0.5s ease, left 0.5s ease;
-        }
-
-        .measuring-cup {
-            width: 80px;
-            height: 120px;
-            border: 3px solid #666;
-            border-top: none;
-            border-radius: 0 0 10px 10px;
-            position: absolute;
-            top: -150px;
-            right: 50px;
-            background-color: rgba(255,255,255,0.8);
+            height: 450px;
             display: flex;
             justify-content: center;
             align-items: center;
-            transition: top 0.3s ease; /* 加快量杯出現/消失的速度 */
-            z-index: 20;
+            margin-bottom: 20px;
+            perspective: 1000px; /* 創造 3D 景深 */
         }
-        .measuring-cup::before {
-            content: '';
-            width: 100%;
-            height: 0%;
-            background-color: var(--add-water-color);
+
+        /* 3D 容器本體 */
+        .tank-3d {
+            position: relative;
+            width: 200px;
+            height: 300px;
+            transform-style: preserve-3d;
+            /* 設定初始觀看角度 */
+            transform: rotateX(-10deg) rotateY(-25deg);
+            transition: transform 0.5s ease;
+        }
+
+        /* 讓學生可以稍微轉動視角 */
+        .simulation-area:hover .tank-3d {
+            transform: rotateX(-15deg) rotateY(-35deg);
+        }
+
+        /* 容器的各個面 */
+        .wall {
             position: absolute;
+            background: var(--tank-bg);
+            border: 2px solid var(--tank-border);
+            box-sizing: border-box;
+        }
+        .wall.back {
+            width: 200px; height: 300px;
+            transform: translateZ(-50px);
+            /* 背面加上刻度線：每 50px (代表 5cm) 畫一條線 */
+            background: repeating-linear-gradient(to top, transparent, transparent 48px, rgba(0,0,0,0.2) 48px, rgba(0,0,0,0.2) 50px);
+        }
+        .wall.left {
+            width: 100px; height: 300px;
+            left: 50px;
+            transform: rotateY(-90deg) translateZ(100px);
+        }
+        .wall.right {
+            width: 100px; height: 300px;
+            left: 50px;
+            transform: rotateY(90deg) translateZ(100px);
+        }
+        .wall.bottom {
+            width: 200px; height: 100px;
+            top: 100px;
+            transform: rotateX(-90deg) translateZ(150px);
+            background: rgba(100, 120, 140, 0.8);
+        }
+        .wall.front {
+            width: 200px; height: 300px;
+            transform: translateZ(50px);
+            border: 2px solid rgba(100, 120, 140, 0.3);
+            background: transparent; /* 前方保持全透明以利觀察 */
+        }
+
+        /* 水體積共通設定 (由前、右、上三個面組成) */
+        .water-volume {
+            position: absolute;
+            width: 200px;
             bottom: 0;
             left: 0;
-            opacity: 0.7;
-            transition: height 0.5s ease-out;
+            transform-style: preserve-3d;
         }
-        .measuring-cup .volume-text {
-            font-size: 14px;
-            color: #444;
-            z-index: 21;
+        .w-face { position: absolute; box-sizing: border-box; }
+        .w-front { width: 200px; height: 100%; background: var(--w-color); transform: translateZ(49px); } /* 稍微內縮避免穿圖 */
+        .w-right { width: 100px; height: 100%; background: var(--w-dark); left: 50px; transform: rotateY(90deg) translateZ(99px); }
+        .w-top { width: 200px; height: 100px; background: var(--w-light); top: 0; transform: translateY(-50px) rotateX(90deg); border: 1px solid rgba(255,255,255,0.3); }
+
+        /* 底部的 15cm 水 */
+        .base-water {
+            height: 150px;
+            --w-color: rgba(77, 166, 255, 0.6);
+            --w-dark: rgba(50, 140, 230, 0.6);
+            --w-light: rgba(120, 200, 255, 0.7);
         }
 
-        .control-panel {
-            margin-top: 20px;
-            border-top: 2px solid #ddd;
-            padding-top: 20px;
+        /* 會變化的那 5cm 水 (初始假裝是原本的水，後來變成橘色補水) */
+        .displaced-water {
+            bottom: 150px; /* 疊在底水之上 */
+            height: 50px;
+            --w-color: rgba(77, 166, 255, 0.6);
+            --w-dark: rgba(50, 140, 230, 0.6);
+            --w-light: rgba(120, 200, 255, 0.7);
+        }
+        /* 補水時切換成橘色 */
+        .displaced-water.orange-mode {
+            --w-color: rgba(255, 153, 0, 0.7);
+            --w-dark: rgba(230, 130, 0, 0.7);
+            --w-light: rgba(255, 180, 50, 0.8);
+            box-shadow: 0 0 20px rgba(255,153,0,0.4);
         }
 
-        .step-info {
-            font-size: 1.1em;
-            margin-bottom: 20px;
-            font-weight: 500;
+        /* 空缺空間的虛線框 */
+        .empty-outline {
+            position: absolute;
+            width: 200px;
+            height: 50px;
+            bottom: 150px;
+            transform-style: preserve-3d;
+            opacity: 0;
+            transition: opacity 0.5s;
         }
-        .step-info .highlight {
-            font-weight: bold;
-            color: #0066cc;
+        .empty-outline .w-front { background: rgba(0,0,0,0.02); border: 2px dashed #888; transform: translateZ(51px); }
+        .empty-outline .w-right { background: rgba(0,0,0,0.02); border: 2px dashed #888; left: 50px; transform: rotateY(90deg) translateZ(101px); }
+
+        /* 3D 石頭 */
+        .stone-3d {
+            position: absolute;
+            width: 90px;
+            height: 60px;
+            bottom: 10px;
+            left: 55px;
+            /* 利用漸層製造立體感 */
+            background: radial-gradient(circle at 30% 30%, #b3b3b3, #555);
+            border-radius: 60% 40% 50% 50% / 50% 50% 60% 40%;
+            /* 將石頭往容器中間推 */
+            transform: translateZ(0px) rotateY(-20deg); 
+            box-shadow: 10px 10px 15px rgba(0,0,0,0.5);
+            transition: bottom 1.5s ease, opacity 0.5s ease, transform 1.5s ease;
         }
 
-        .buttons {
+        /* 刻度文字 (放在左側牆面旁邊) */
+        .scale-labels {
+            position: absolute;
+            left: -40px;
+            height: 300px;
             display: flex;
-            justify-content: center;
-            gap: 15px;
-        }
-
-        button {
-            padding: 12px 24px;
-            font-size: 1em;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background-color 0.3s ease, transform 0.1s ease;
+            flex-direction: column;
+            justify-content: space-between;
             font-weight: bold;
-            /* 防止在手機上長按時選取文字 */
-            -webkit-user-select: none;
-            user-select: none;
-            touch-action: manipulation;
+            color: #555;
+            transform: translateZ(50px);
         }
+        
+        /* 控制面板區 (同前一版) */
+        .control-panel { margin-top: 20px; border-top: 2px solid #ddd; padding-top: 20px; }
+        .step-info { font-size: 1.1em; margin-bottom: 20px; font-weight: 500; }
+        .step-info .highlight { font-weight: bold; color: #0066cc; }
+        .buttons { display: flex; justify-content: center; gap: 15px; }
+        button { padding: 12px 24px; font-size: 1em; border: none; border-radius: 8px; cursor: pointer; transition: all 0.2s; font-weight: bold; touch-action: manipulation; }
         button:active { transform: scale(0.98); }
-
         .btn-blue { background-color: #e6f0ff; color: #0066cc; }
         .btn-blue:hover { background-color: #cce0ff; }
         .btn-blue:disabled { background-color: #ddd; color: #888; cursor: not-allowed; }
-
-        .btn-green { background-color: #e6ffec; color: #009933; }
-        .btn-green:hover { background-color: #ccffda; }
-        .btn-green:disabled { background-color: #ddd; color: #888; cursor: not-allowed; }
-
-        /* 修改橘色按鈕的樣式，提示使用者需要按住 */
         .btn-orange { background-color: #fff9e6; color: #cc7a00; border: 2px solid #cc7a00; }
-        .btn-orange:hover { background-color: #fff2cc; }
         .btn-orange:active { background-color: #ffe6b3; }
         .btn-orange:disabled { background-color: #ddd; color: #888; cursor: not-allowed; border: none; }
-
         .btn-reset { background-color: #ffe6e6; color: #cc0000; }
-        .btn-reset:hover { background-color: #ffcccc; }
-
-        .formula-display {
-            margin-top: 20px;
-            background-color: #f9f9f9;
-            padding: 15px;
-            border-radius: 8px;
-            border: 1px solid #ddd;
-            display: none;
-            text-align: left;
-        }
+        .formula-display { margin-top: 20px; background-color: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #ddd; display: none; text-align: left; }
         .formula-display p { margin: 5px 0; font-size: 0.95em; }
-        .formula-display .final-result {
-            font-size: 1.1em;
-            font-weight: bold;
-            color: #009933;
-            margin-top: 10px;
-            border-top: 1px solid #ddd;
-            padding-top: 10px;
-        }
+        .formula-display .final-result { font-size: 1.1em; font-weight: bold; color: #009933; margin-top: 10px; border-top: 1px solid #ddd; padding-top: 10px; }
     </style>
 </head>
 <body>
 
 <div class="container-wrapper">
     <div class="simulation-area">
-        <div class="tank">
-            <div style="position: absolute; left: 0; bottom: 0; width: 100%; height: 100%; background: repeating-linear-gradient(to top, transparent, transparent calc(100% / 30 - 1px), #ccc calc(100% / 30 - 1px), #ccc calc(100% / 30)), repeating-linear-gradient(to top, transparent, transparent calc(100% / 6 - 2px), #999 calc(100% / 6 - 2px), #999 calc(100% / 6))"></div>
+        <div class="tank-3d">
+            <div class="wall back"></div>
+            <div class="wall left"></div>
+            <div class="wall bottom"></div>
+            <div class="wall right"></div>
+
+            <div class="water-volume base-water">
+                <div class="w-face w-front"></div>
+                <div class="w-face w-right"></div>
+                <div class="w-face w-top"></div>
+            </div>
+
+            <div class="empty-outline" id="emptyOutline">
+                <div class="w-face w-front"></div>
+                <div class="w-face w-right"></div>
+            </div>
+
+            <div class="water-volume displaced-water" id="displacedWater">
+                <div class="w-face w-front"></div>
+                <div class="w-face w-right"></div>
+                <div class="w-face w-top"></div>
+            </div>
+
+            <div class="stone-3d" id="stone"></div>
             
-            <div class="scale">
-                <div></div>
+            <div class="wall front"></div>
+
+            <div class="scale-labels">
                 <div>30</div>
                 <div>25</div>
                 <div>20</div>
@@ -241,27 +234,19 @@
                 <div>5</div>
                 <div>0</div>
             </div>
-            
-            <div class="water-base"></div>
-            <div class="water-layer" id="waterLayer"></div>
-            <div class="outline" id="spaceOutline"></div>
-            <div class="stone" id="stone"></div>
-        </div>
-
-        <div class="measuring-cup" id="measuringCup">
-            <div class="volume-text">補水</div>
         </div>
     </div>
 
     <div class="control-panel">
         <div class="step-info" id="stepInfo">
-            觀察初始狀態：<span class="highlight">水 + 石頭 = 20 cm</span>
+            觀察初始狀態：<span class="highlight">水 + 石頭 = 20 cm</span> <br>
+            <span style="font-size: 0.85em; color: #666;">（💡 提示：滑鼠游標移到容器上，可以切換觀看視角喔！）</span>
         </div>
         
         <div class="buttons">
             <button class="btn-blue" id="btnRemoveStone" onclick="removeStone()">1. 拿出石頭</button>
             <button class="btn-orange" id="btnAddWater">2. 長按補水（看體積）</button>
-            <button class="btn-reset" id="btnReset" onclick="reset()">重置</button>
+            <button class="btn-reset" onclick="reset()">重置</button>
         </div>
 
         <div class="formula-display" id="formulaDisplay">
@@ -274,60 +259,46 @@
 </div>
 
 <script>
-    const tank = document.querySelector('.tank');
-    const waterBase = document.querySelector('.water-base');
-    const waterLayer = document.getElementById('waterLayer');
-    const spaceOutline = document.getElementById('spaceOutline');
+    const displacedWater = document.getElementById('displacedWater');
+    const emptyOutline = document.getElementById('emptyOutline');
     const stone = document.getElementById('stone');
-    const measuringCup = document.getElementById('measuringCup');
     const stepInfo = document.getElementById('stepInfo');
     const btnRemoveStone = document.getElementById('btnRemoveStone');
     const btnAddWater = document.getElementById('btnAddWater');
     const formulaDisplay = document.getElementById('formulaDisplay');
-    const formula1 = document.getElementById('formula1');
-    const formula2 = document.getElementById('formula2');
-    const finalResult = document.getElementById('finalResult');
 
-    // 參數設定
-    const length = 20; 
-    const width = 10; 
-    const totalHeight = 30; 
-    const baseHeight = 15; 
-    const initialTotalHeight = 20; 
-    const targetAddedHeight = initialTotalHeight - baseHeight; // 5 cm
-
-    // 動態加水變數
-    let currentAddedHeight = 0;
+    // 參數 (比例：10px = 1cm)
+    const targetHeightPx = 50; // 5cm 高度差
+    let currentHeightPx = targetHeightPx;
     let isPouring = false;
     let pourAnimation;
-    let isStoneRemoved = false; // 確保石頭拿出後才能倒水
+    let isStoneRemoved = false;
 
-    function updateStep(text) {
-        stepInfo.innerHTML = text;
-    }
+    function updateStep(text) { stepInfo.innerHTML = text; }
 
-    // 初始化狀態
     function init() {
-        waterLayer.style.transition = 'height 1s ease, background-color 0.5s ease';
-        waterLayer.style.height = `${(initialTotalHeight - baseHeight) / totalHeight * 100}%`;
-        waterLayer.style.bottom = `${baseHeight / totalHeight * 100}%`;
-        waterLayer.style.backgroundColor = 'var(--water-color)';
-        spaceOutline.style.opacity = '0';
-        stone.style.bottom = '0px';
+        // 恢復初始藍色滿水位
+        displacedWater.classList.remove('orange-mode');
+        displacedWater.style.transition = 'height 1s ease';
+        displacedWater.style.height = `${targetHeightPx}px`;
+        currentHeightPx = targetHeightPx;
+
+        // 石頭歸位
+        stone.style.transition = 'none'; // 瞬間歸位
+        stone.style.bottom = '10px';
         stone.style.opacity = '1';
-        stone.style.left = '50px';
-        measuringCup.style.top = '-150px';
-        
+        stone.style.transform = 'translateZ(0px) rotateY(-20deg)';
+
+        emptyOutline.style.opacity = '0';
         btnAddWater.disabled = true;
         btnRemoveStone.disabled = false;
         formulaDisplay.style.display = 'none';
-        
-        currentAddedHeight = 0;
-        isPouring = false;
         isStoneRemoved = false;
-        cancelAnimationFrame(pourAnimation);
-
-        updateStep(`觀察初始狀態：<span class="highlight">水 + 石頭 = 20 cm</span>`);
+        
+        updateStep(`觀察初始狀態：<span class="highlight">水 + 石頭 = 20 cm</span> <br><span style="font-size: 0.85em; color: #666;">（💡 提示：滑鼠游標移到容器上，可以切換觀看視角喔！）</span>`);
+        
+        // 恢復石頭動畫屬性
+        setTimeout(() => { stone.style.transition = 'bottom 1.5s ease, opacity 0.5s ease, transform 1.5s ease'; }, 50);
     }
 
     // 1. 拿出石頭
@@ -335,123 +306,100 @@
         btnRemoveStone.disabled = true;
         updateStep(`正在拿出石頭...`);
         
+        // 石頭往上飛並往後退
         stone.style.bottom = '350px';
-        stone.style.left = '-150px';
+        stone.style.transform = 'translateZ(-100px) rotateY(180deg)';
         stone.style.opacity = '0';
         
+        // 水位下降
         setTimeout(() => {
-            waterLayer.style.height = '0%';
+            displacedWater.style.height = '0px';
             updateStep(`拿出石頭後，水位降至 <span class="highlight">15 cm</span>。原本石頭佔用的空間空出來了！`);
-        }, 1500);
+        }, 1200);
         
+        // 顯示虛線框
         setTimeout(() => {
-            spaceOutline.style.opacity = '1';
+            emptyOutline.style.opacity = '1';
             btnAddWater.disabled = false;
             isStoneRemoved = true;
-            // 取消 height 漸變，讓後續手動加水不會有延遲感
-            waterLayer.style.transition = 'background-color 0.5s ease'; 
-        }, 2500);
+            // 準備補水，切換為橘色模式，取消 CSS 過渡讓 JS 接管
+            displacedWater.classList.add('orange-mode');
+            displacedWater.style.transition = 'none'; 
+            currentHeightPx = 0;
+        }, 2200);
     }
 
     // --- 長按加水互動邏輯 ---
-
     function startPouring(e) {
-        // 防止觸控螢幕預設行為（如滾動或選取）
         if(e.type === 'touchstart') e.preventDefault();
-        
-        if (!isStoneRemoved || currentAddedHeight >= targetAddedHeight) return;
+        if (!isStoneRemoved || currentHeightPx >= targetHeightPx) return;
         
         isPouring = true;
-        measuringCup.style.top = '50px'; // 顯示量杯
-        waterLayer.style.backgroundColor = 'var(--add-water-color)'; // 變橘色
-        
-        updateStep(`正在補水... 請繼續按住直到水位回到 20 cm`);
-        
-        // 啟動動畫迴圈
+        updateStep(`正在補入橘色的水... 請繼續按住填滿空間`);
         lastTime = performance.now();
         pourAnimation = requestAnimationFrame(pourLoop);
     }
 
     function stopPouring(e) {
         if(e && e.type === 'touchend') e.preventDefault();
-
         if (!isPouring) return;
+        
         isPouring = false;
         cancelAnimationFrame(pourAnimation);
-        measuringCup.style.top = '-150px'; // 隱藏量杯
 
-        if (currentAddedHeight > 0 && currentAddedHeight < targetAddedHeight) {
-            updateStep(`已補水 ${(baseHeight + currentAddedHeight).toFixed(1)} cm，還沒滿喔！請繼續<span class="highlight">長按按鈕</span>。`);
+        if (currentHeightPx > 0 && currentHeightPx < targetHeightPx) {
+            updateStep(`還沒滿喔！請繼續<span class="highlight">長按按鈕</span>直到填滿虛線框。`);
         }
     }
 
     let lastTime = 0;
     function pourLoop(time) {
         if (!isPouring) return;
-
         const deltaTime = time - lastTime;
         lastTime = time;
 
-        // 調整加水速度，這裡設定每秒增加約 1.5 cm
-        currentAddedHeight += 0.0015 * deltaTime; 
+        // 調整加水速度 (每幀增加的 px)
+        currentHeightPx += 0.04 * deltaTime; 
 
-        if (currentAddedHeight >= targetAddedHeight) {
-            currentAddedHeight = targetAddedHeight;
-            updateWaterUI();
+        if (currentHeightPx >= targetHeightPx) {
+            currentHeightPx = targetHeightPx;
+            displacedWater.style.height = `${currentHeightPx}px`;
             stopPouring();
-            finishPouring(); // 達到20cm，觸發完成邏輯
+            finishPouring();
             return;
         }
 
-        updateWaterUI();
+        displacedWater.style.height = `${currentHeightPx}px`;
         pourAnimation = requestAnimationFrame(pourLoop);
-    }
-
-    function updateWaterUI() {
-        // 更新水層高度
-        waterLayer.style.height = `${(currentAddedHeight / totalHeight) * 100}%`;
     }
 
     function finishPouring() {
         btnAddWater.disabled = true;
-        updateStep(`水位順利補滿回到 <span class="highlight">20 cm</span> 了！`);
-        
-        // 讓補回來的水發光
-        waterLayer.style.transition = 'background-color 0.5s ease, box-shadow 0.5s ease';
-        waterLayer.style.boxShadow = '0 0 15px rgba(255,153,0,0.7)';
+        emptyOutline.style.opacity = '0'; // 填滿後隱藏虛線框
+        updateStep(`立體的橘色水塊，剛好填滿了石頭的空間！`);
         
         formulaDisplay.style.display = 'block';
-        formula1.innerHTML = `補進去的水體積 = 長 <span class="highlight">20</span> × 寬 <span class="highlight">10</span> × 高度差 (<span class="highlight">20 - 15</span>) cm`;
+        document.getElementById('formula1').innerHTML = `補進去的水體積 = 底部長 <span class="highlight">20</span> × 寬 <span class="highlight">10</span> × 高度差 (<span class="highlight">20 - 15</span>) cm`;
         
         setTimeout(() => {
-            const volume = length * width * targetAddedHeight;
-            formula2.innerHTML = `補進去的水體積 = 20 × 10 × 5 = <span class="highlight">${volume} cm³</span>`;
+            document.getElementById('formula2').innerHTML = `補進去的水體積 = 20 × 10 × 5 = <span class="highlight">1000 cm³</span>`;
         }, 1000);
 
         setTimeout(() => {
-            const volume = length * width * targetAddedHeight;
-            finalResult.innerHTML = `這塊補進去的水，剛剛好填滿了石頭佔用的空間。<br/><strong>因此，石頭的體積 = ${volume} cm³。</strong>`;
+            document.getElementById('finalResult').innerHTML = `你看見了嗎？橘色水塊的形狀雖然跟石頭不一樣，但它們佔用的「空間大小」是一樣的。<br/><strong>所以，石頭的體積 = 1000 cm³。</strong>`;
         }, 2500);
     }
 
-    // 綁定按鈕事件 (支援滑鼠與手機觸控)
+    // 綁定按鈕事件
     btnAddWater.addEventListener('mousedown', startPouring);
     btnAddWater.addEventListener('mouseup', stopPouring);
-    btnAddWater.addEventListener('mouseleave', stopPouring); // 滑鼠移出按鈕也算停止
-
+    btnAddWater.addEventListener('mouseleave', stopPouring);
     btnAddWater.addEventListener('touchstart', startPouring, {passive: false});
     btnAddWater.addEventListener('touchend', stopPouring, {passive: false});
     btnAddWater.addEventListener('touchcancel', stopPouring, {passive: false});
 
-    // 重置按鈕
-    function reset() {
-        waterLayer.style.boxShadow = 'none';
-        init();
-    }
-
     // 啟動
     init();
-
 </script>
 
 </body>
