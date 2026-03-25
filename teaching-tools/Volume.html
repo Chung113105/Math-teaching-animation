@@ -175,7 +175,7 @@
             transform: translateZ(50px);
         }
         
-        /* 控制面板區 (同前一版) */
+        /* 控制面板區 */
         .control-panel { margin-top: 20px; border-top: 2px solid #ddd; padding-top: 20px; }
         .step-info { font-size: 1.1em; margin-bottom: 20px; font-weight: 500; }
         .step-info .highlight { font-weight: bold; color: #0066cc; }
@@ -388,6 +388,13 @@
         setTimeout(() => {
             document.getElementById('finalResult').innerHTML = `你看見了嗎？橘色水塊的形狀雖然跟石頭不一樣，但它們佔用的「空間大小」是一樣的。<br/><strong>所以，石頭的體積 = 1000 cm³。</strong>`;
         }, 2500);
+    }
+
+    // --- 修復：新增重置函數 ---
+    function reset() {
+        isPouring = false;
+        cancelAnimationFrame(pourAnimation); // 停止可能正在進行的加水動畫
+        init(); // 重新初始化所有狀態
     }
 
     // 綁定按鈕事件
